@@ -1124,7 +1124,10 @@ Status TabletManager::_create_tablet_meta_unlocked(const TCreateTabletReq& reque
             size_t old_col_idx = 0;
             for (old_col_idx = 0; old_col_idx < old_num_columns; ++old_col_idx) {
                 auto old_name = base_tablet->tablet_schema().column(old_col_idx).name();
-                if (old_name == column.column_name) {
+                // For enhanced mv : select sum(height),max(height) from ...
+                // The combination of column name and aggregation type is used as the unique identification
+                FieldAggregationMethod old_agg = base_tablet->tablet_schema().column(old_col_idx).aggregation();
+                if (compare_aggregation_type(old_agg, column) && old_name == column.column_name) {
                     uint32_t old_unique_id = base_tablet->tablet_schema().column(old_col_idx).unique_id();
                     col_idx_to_unique_id[new_col_idx] = old_unique_id;
                     // During linked schema change, the now() default value is stored in TabletMeta.
@@ -1369,6 +1372,59 @@ Status TabletManager::_move_tablet_directories_to_trash(const TabletSharedPtr& t
     }
     // move tablet directories to ${storage_root_path}/trash
     return move_to_trash(tablet->tablet_id_path());
+}
+
+bool TabletManager::compare_aggregation_type(FieldAggregationMethod type, const TColumn& column) {
+    switch (type) {
+    case OLAP_FIELD_AGGREGATION_NONE:
+        if (!column.__isset.aggregation_type) {
+            return true;
+        }
+        break;
+    case OLAP_FIELD_AGGREGATION_SUM:
+        if (column.__isset.aggregation_type && column.aggregation_type == TAggregationType::SUM) {
+            return true;
+        }
+        break;
+    case OLAP_FIELD_AGGREGATION_MIN:
+        if (column.__isset.aggregation_type && column.aggregation_type == TAggregationType::MIN) {
+            return true;
+        }
+        break;
+    case OLAP_FIELD_AGGREGATION_MAX:
+        if (column.__isset.aggregation_type && column.aggregation_type == TAggregationType::MAX) {
+            return true;
+        }
+        break;
+    case OLAP_FIELD_AGGREGATION_REPLACE:
+        if (column.__isset.aggregation_type && column.aggregation_type == TAggregationType::REPLACE) {
+            return true;
+        }
+        break;
+    case OLAP_FIELD_AGGREGATION_REPLACE_IF_NOT_NULL:
+        if (column.__isset.aggregation_type && column.aggregation_type == TAggregationType::REPLACE_IF_NOT_NULL) {
+            return true;
+        }
+        break;
+    case OLAP_FIELD_AGGREGATION_HLL_UNION:
+        if (column.__isset.aggregation_type && column.aggregation_type == TAggregationType::HLL_UNION) {
+            return true;
+        }
+        break;
+    case OLAP_FIELD_AGGREGATION_BITMAP_UNION:
+        if (column.__isset.aggregation_type && column.aggregation_type == TAggregationType::BITMAP_UNION) {
+            return true;
+        }
+        break;
+    case OLAP_FIELD_AGGREGATION_PERCENTILE_UNION:
+        if (column.__isset.aggregation_type && column.aggregation_type == TAggregationType::PERCENTILE_UNION) {
+            return true;
+        }
+        break;
+    case OLAP_FIELD_AGGREGATION_UNKNOWN:
+        return false;
+    }
+    return false;
 }
 
 } // end namespace starrocks

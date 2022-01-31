@@ -95,6 +95,8 @@ public:
 
     const std::string& col_name() const { return _col_name; }
 
+    const std::string& agg_fn_name() const { return _agg_fn_name; }
+
     /// Return true if the physical layout of this descriptor matches the physical layout
     /// of other_desc, but not necessarily ids.
     bool layout_equals(const SlotDescriptor& other_desc) const;
@@ -130,6 +132,8 @@ private:
     int _field_idx;
 
     const bool _is_materialized;
+    // for mv
+    const std::string _agg_fn_name;
 
     SlotDescriptor(const TSlotDescriptor& tdesc);
     SlotDescriptor(const PSlotDescriptor& pdesc);

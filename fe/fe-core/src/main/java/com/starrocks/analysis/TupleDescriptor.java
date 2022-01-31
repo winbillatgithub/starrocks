@@ -29,6 +29,7 @@ import com.starrocks.catalog.ColumnStats;
 import com.starrocks.catalog.PrimitiveType;
 import com.starrocks.catalog.Table;
 import com.starrocks.thrift.TTupleDescriptor;
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -103,6 +104,18 @@ public class TupleDescriptor {
     public SlotDescriptor getSlot(int slotId) {
         for (SlotDescriptor slot : slots) {
             if (slot.getId().asInt() == slotId) {
+                return slot;
+            }
+        }
+        return null;
+    }
+
+    public SlotDescriptor getSlot(int slotId, String aggFnName) {
+        if (StringUtils.isEmpty(aggFnName)) {
+            return getSlot(slotId);
+        }
+        for (SlotDescriptor slot : slots) {
+            if (slot.getId().asInt() == slotId && aggFnName.equals(slot.getAggFnName())) {
                 return slot;
             }
         }

@@ -57,7 +57,8 @@ SlotDescriptor::SlotDescriptor(const TSlotDescriptor& tdesc)
           _slot_idx(tdesc.slotIdx),
           _slot_size(_type.get_slot_size()),
           _field_idx(-1),
-          _is_materialized(tdesc.isMaterialized) {}
+          _is_materialized(tdesc.isMaterialized),
+          _agg_fn_name(tdesc.aggFnName) {}
 
 SlotDescriptor::SlotDescriptor(const PSlotDescriptor& pdesc)
         : _id(pdesc.id()),
@@ -70,7 +71,8 @@ SlotDescriptor::SlotDescriptor(const PSlotDescriptor& pdesc)
           _slot_idx(pdesc.slot_idx()),
           _slot_size(_type.get_slot_size()),
           _field_idx(-1),
-          _is_materialized(pdesc.is_materialized()) {}
+          _is_materialized(pdesc.is_materialized()),
+          _agg_fn_name(pdesc.agg_fn_name()) {}
 
 void SlotDescriptor::to_protobuf(PSlotDescriptor* pslot) const {
     pslot->set_id(_id);
@@ -83,6 +85,7 @@ void SlotDescriptor::to_protobuf(PSlotDescriptor* pslot) const {
     pslot->set_col_name(_col_name);
     pslot->set_slot_idx(_slot_idx);
     pslot->set_is_materialized(_is_materialized);
+    pslot->set_agg_fn_name(_agg_fn_name);
 }
 
 std::string SlotDescriptor::debug_string() const {

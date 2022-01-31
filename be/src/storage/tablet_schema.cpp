@@ -531,6 +531,25 @@ size_t TabletSchema::field_index(const std::string_view& field_name) const {
     return -1;
 }
 
+size_t TabletSchema::field_index(const std::string_view& field_name, const std::string& agg_fn_name) const {
+    if (agg_fn_name.empty()) {
+        return field_index(field_name);
+    }
+    bool field_exist = false;
+    int ordinal = -1;
+    std::string upper_fn_name = agg_fn_name;
+    std::transform(upper_fn_name.begin(), upper_fn_name.end(), upper_fn_name.begin(), ::toupper);
+    for (auto& column : _cols) {
+        ordinal++;
+        if (column.name() == field_name &&
+            upper_fn_name == column.get_string_by_aggregation_type(column.aggregation())) {
+            field_exist = true;
+            break;
+        }
+    }
+    return field_exist ? ordinal : -1;
+}
+
 const std::vector<TabletColumn>& TabletSchema::columns() const {
     return _cols;
 }

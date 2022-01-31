@@ -44,6 +44,8 @@ public:
 
     size_t get_field_index_by_name(const std::string& name) const;
 
+    size_t get_field_index_by_name_fn(const std::string& name, const std::string& agg_fn_name) const;
+
     void convert_to(Schema* new_schema, const std::vector<FieldType>& new_types) const {
         // fields
         int num_fields = _fields.size();
@@ -63,10 +65,12 @@ public:
 
 private:
     void _build_index_map(const Fields& fields);
+    void _put_index(const FieldPtr& field, int i);
+    void _remove_index(const FieldPtr& field);
 
     Fields _fields;
     size_t _num_keys = 0;
-    std::unordered_map<std::string_view, size_t> _name_to_index;
+    std::unordered_map<std::string, size_t> _name_to_index;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Schema& schema) {

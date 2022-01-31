@@ -497,6 +497,8 @@ public class PlanFragmentBuilder {
                 slotDescriptor.setColumn(entry.getValue());
                 slotDescriptor.setIsNullable(entry.getValue().isAllowNull());
                 slotDescriptor.setIsMaterialized(true);
+                // winbill, set agg_fn_name of the slot descriptor for enhanced mv
+                slotDescriptor.setAggFnName(entry.getKey().getAggFnName());
                 context.getColRefToExpr().put(entry.getKey(), new SlotRef(entry.getKey().toString(), slotDescriptor));
             }
 

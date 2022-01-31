@@ -71,6 +71,8 @@ public class SlotDescriptor {
     // used for load to get more information of varchar and decimal
     // and for query result set metadata
     private Type originType;
+    // used for mv
+    private String aggFnName;
 
     public SlotDescriptor(SlotId id, TupleDescriptor parent) {
         this.id = id;
@@ -96,6 +98,7 @@ public class SlotDescriptor {
         this.isAgg = false;
         this.stats = src.stats;
         this.type = src.type;
+        this.aggFnName = src.aggFnName;
     }
 
     public void setMultiRef(boolean isMultiRef) {
@@ -147,6 +150,14 @@ public class SlotDescriptor {
 
     public Type getOriginType() {
         return originType;
+    }
+
+    public String getAggFnName() {
+        return aggFnName;
+    }
+
+    public void setAggFnName(String aggFnName) {
+        this.aggFnName = aggFnName;
     }
 
     public Column getColumn() {
@@ -297,10 +308,12 @@ public class SlotDescriptor {
     // TODO
     public TSlotDescriptor toThrift() {
         if (originType != null) {
-            return new TSlotDescriptor(id.asInt(), parent.getId().asInt(), originType.toThrift(), -1,
+            TSlotDescriptor slotDescriptor = new TSlotDescriptor(id.asInt(), parent.getId().asInt(), originType.toThrift(), -1,
                     byteOffset, nullIndicatorByte,
                     nullIndicatorBit, ((column != null) ? column.getName() : ""),
                     slotIdx, isMaterialized);
+            slotDescriptor.setAggFnName(this.getAggFnName());
+            return slotDescriptor;
         } else {
             /**
              * Refer to {@link Expr#treeToThrift}
@@ -308,10 +321,12 @@ public class SlotDescriptor {
             if (type.isNull()) {
                 type = ScalarType.BOOLEAN;
             }
-            return new TSlotDescriptor(id.asInt(), parent.getId().asInt(), type.toThrift(), -1,
+            TSlotDescriptor slotDescriptor = new TSlotDescriptor(id.asInt(), parent.getId().asInt(), type.toThrift(), -1,
                     byteOffset, nullIndicatorByte,
                     nullIndicatorBit, ((column != null) ? column.getName() : ""),
                     slotIdx, isMaterialized);
+            slotDescriptor.setAggFnName(this.getAggFnName());
+            return slotDescriptor;
         }
     }
 

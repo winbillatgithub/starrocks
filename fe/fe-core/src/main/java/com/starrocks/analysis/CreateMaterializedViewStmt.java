@@ -170,6 +170,7 @@ public class CreateMaterializedViewStmt extends DdlStmt {
         }
         boolean meetAggregate = false;
         // TODO(ml): support same column with different aggregation function
+        // winbill: key is composed of [name + aggregation function name]
         Set<String> mvColumnNameSet = Sets.newHashSet();
         /**
          * 1. The columns of mv must be a single column or a aggregate column without any calculate.
@@ -226,7 +227,7 @@ public class CreateMaterializedViewStmt extends DdlStmt {
                 functionCallExpr.collect(SlotRef.class, slots);
                 Preconditions.checkArgument(slots.size() == 1);
                 String columnName = slots.get(0).getColumnName().toLowerCase();
-                if (!mvColumnNameSet.add(columnName)) {
+                if (!mvColumnNameSet.add(columnName + "#" + functionName)) {
                     ErrorReport.reportAnalysisException(ErrorCode.ERR_DUP_FIELDNAME, columnName);
                 }
 

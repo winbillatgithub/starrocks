@@ -109,6 +109,7 @@ public:
 
     ColumnId id() const { return _id; }
     std::string_view name() const { return {_name.data(), _name.size()}; }
+    std::string mutable_name() const { return {_name.data(), _name.size()}; }
     const TypeInfoPtr& type() const { return _type; }
 
     bool is_nullable() const;

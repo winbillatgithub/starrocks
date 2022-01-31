@@ -185,7 +185,7 @@ Status TabletScanner::_init_return_columns() {
         if (!slot->is_materialized()) {
             continue;
         }
-        int32_t index = _tablet->field_index(slot->col_name());
+        int32_t index = _tablet->field_index(slot->col_name(), slot->agg_fn_name());
         if (index < 0) {
             auto msg = strings::Substitute("Invalid column name: $0", slot->col_name());
             LOG(WARNING) << msg;
@@ -252,7 +252,7 @@ Status TabletScanner::get_chunk(RuntimeState* state, Chunk* chunk) {
         }
 
         for (auto slot : _query_slots) {
-            size_t column_index = chunk->schema()->get_field_index_by_name(slot->col_name());
+            size_t column_index = chunk->schema()->get_field_index_by_name_fn(slot->col_name(), slot->agg_fn_name());
             chunk->set_slot_id_to_index(slot->id(), column_index);
         }
 

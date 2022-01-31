@@ -41,6 +41,7 @@ import com.starrocks.sql.optimizer.rule.RuleType;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,8 +51,9 @@ import java.util.stream.Collectors;
  * Select best materialized view for olap scan node
  */
 public class MaterializedViewRule extends Rule {
-    public MaterializedViewRule() {
+    public MaterializedViewRule(ColumnRefFactory columnRefFactory) {
         super(RuleType.TF_MATERIALIZED_VIEW, Pattern.create(OperatorType.PATTERN));
+        this.factory = columnRefFactory;
     }
 
     private final Map<Integer, Set<Integer>> columnIdsInPredicates = Maps.newHashMap();
@@ -72,6 +74,16 @@ public class MaterializedViewRule extends Rule {
     private final Map<Integer, Boolean> isSPJQueries = Maps.newHashMap();
     // record the scan node relation id which has been accessed.
     private final Set<Integer> traceRelationIds = Sets.newHashSet();
+    // rewrite columns which contain multiple aggregate functions
+    private Map<ColumnRefOperator, LinkedHashSet<ColumnRefOperator>> columnRewriteMap = Maps.newHashMap();
+
+    public Map<Integer, Set<CallOperator>> getAggFunctions() {
+        return this.aggFunctions;
+    }
+
+    public ColumnRefFactory getFactory() {
+        return this.factory;
+    }
 
     private void init(OptExpression root) {
         collectAllPredicates(root);
@@ -90,7 +102,6 @@ public class MaterializedViewRule extends Rule {
 
     @Override
     public List<OptExpression> transform(OptExpression input, OptimizerContext context) {
-        this.factory = context.getColumnRefFactory();
         OptExpression optExpression = input;
         if (!isExistMVs(optExpression)) {
             return Lists.newArrayList(optExpression);
@@ -113,9 +124,8 @@ public class MaterializedViewRule extends Rule {
                 continue;
             }
 
-            BestIndexRewriter bestIndexRewriter = new BestIndexRewriter(scan);
-            optExpression = bestIndexRewriter.rewrite(optExpression, bestIndex);
-
+            BestIndexRewriter bestIndexRewriter = new BestIndexRewriter(scan, bestIndex);
+            optExpression = bestIndexRewriter.rewrite(optExpression, this);
             if (rewriteContexts.containsKey(bestIndex)) {
                 List<RewriteContext> rewriteContext = rewriteContexts.get(bestIndex);
                 List<RewriteContext> percentileContexts = rewriteContext.stream().
@@ -790,6 +800,17 @@ public class MaterializedViewRule extends Rule {
             }
         }
         return false;
+    }
+
+    public void addColumnRewriteItem(ColumnRefOperator from, ColumnRefOperator to) {
+        if (!columnRewriteMap.containsKey(from)) {
+            columnRewriteMap.put(from, new LinkedHashSet<>());
+        }
+        columnRewriteMap.get(from).add(to);
+    }
+
+    public LinkedHashSet getColumnRewriteItem(ColumnRefOperator from) {
+        return columnRewriteMap.get(from);
     }
 
     public static class RewriteContext {

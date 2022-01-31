@@ -101,6 +101,7 @@ public:
     inline size_t next_unique_id() const;
     inline size_t row_size() const;
     inline size_t field_index(const string& field_name) const;
+    inline size_t field_index(const string& field_name, const string& agg_fn_name) const;
 
     // operation in rowsets
     Status add_rowset(const RowsetSharedPtr& rowset, bool need_persist = true);
@@ -372,6 +373,10 @@ inline size_t Tablet::next_unique_id() const {
 
 inline size_t Tablet::field_index(const string& field_name) const {
     return _tablet_meta->tablet_schema().field_index(field_name);
+}
+
+inline size_t Tablet::field_index(const string& field_name, const string& agg_fn_name) const {
+    return _tablet_meta->tablet_schema().field_index(field_name, agg_fn_name);
 }
 
 inline size_t Tablet::row_size() const {

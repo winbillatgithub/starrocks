@@ -212,7 +212,8 @@ public class Optimizer {
         }
 
         OptExpression tree = memo.getRootGroup().extractLogicalTree();
-        tree = new MaterializedViewRule().transform(tree, context).get(0);
+        tree = new MaterializedViewRule(rootTaskContext.getOptimizerContext().getColumnRefFactory())
+                .transform(tree, context).get(0);
         memo.replaceRewriteExpression(memo.getRootGroup(), tree);
 
         ruleRewriteOnlyOnce(memo, rootTaskContext, RuleSetType.PARTITION_PRUNE);

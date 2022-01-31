@@ -18,12 +18,22 @@ public final class ColumnRefOperator extends ScalarOperator {
     private final int id;
     private final String name;
     private boolean nullable;
+    private String aggFnName;
 
     public ColumnRefOperator(int id, Type type, String name, boolean nullable) {
         super(OperatorType.VARIABLE, type);
         this.id = id;
         this.name = requireNonNull(name, "name is null");
         this.nullable = nullable;
+        this.aggFnName = "";
+    }
+
+    public ColumnRefOperator(int id, Type type, String name, boolean nullable, String aggFnName) {
+        super(OperatorType.VARIABLE, type);
+        this.id = id;
+        this.name = requireNonNull(name, "name is null");
+        this.nullable = nullable;
+        this.aggFnName = aggFnName;
     }
 
     public int getId() {
@@ -32,6 +42,14 @@ public final class ColumnRefOperator extends ScalarOperator {
 
     public String getName() {
         return name;
+    }
+
+    public String getAggFnName() {
+        return aggFnName;
+    }
+
+    public void setAggFnName(String aggFnName) {
+        this.aggFnName = aggFnName;
     }
 
     @Override

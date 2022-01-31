@@ -87,6 +87,15 @@ public class DescriptorTable {
         return result;
     }
 
+    public SlotDescriptor addSlotDescriptor(TupleDescriptor d, SlotId slotId, String aggFnName) {
+        SlotDescriptor result = new SlotDescriptor(slotId, d);
+        if (null == d.getSlot(slotId.asInt(), aggFnName)) {
+            d.addSlot(result);
+        }
+        slotDescs.put(result.getId(), result); // TODO: winbill. max(height),min(height) have identical SlotId, slotDescs's key needs to be extended.
+        return result;
+    }
+
     /**
      * Append copy of src to dest.
      */
