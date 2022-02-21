@@ -44,7 +44,7 @@ public class AggColumnsRewriter extends OptExpressionVisitor<OptExpression, Mate
     public OptExpression visitLogicalTableScan(OptExpression optExpression, MaterializedViewRule context) {
         LogicalOlapScanOperator olapScanOperator = (LogicalOlapScanOperator) optExpression.getOp();
 
-        if (olapScanOperator.equals(scanOperator)) {
+        // if (olapScanOperator.equals(scanOperator)) {
             // Output columns need to be rewrite
             Map<ColumnRefOperator, Column> columnRefOperatorColumnMap =
                     new HashMap<>(olapScanOperator.getColRefToColumnMetaMap());
@@ -55,7 +55,7 @@ public class AggColumnsRewriter extends OptExpressionVisitor<OptExpression, Mate
                 // Set<CallOperator>
                 for (CallOperator callOperator : entry.getValue()) {
                     List<ScalarOperator> arguments = callOperator.getChildren();
-                    if (arguments.isEmpty()) {
+                    if (arguments.isEmpty() || !(arguments.get(0) instanceof ColumnRefOperator)) {
                         continue;
                     }
                     ColumnRefOperator operator = (ColumnRefOperator) arguments.get(0);
@@ -94,7 +94,7 @@ public class AggColumnsRewriter extends OptExpressionVisitor<OptExpression, Mate
                     olapScanOperator.getHintsTabletIds());
 
             optExpression = OptExpression.create(newScanOperator);
-        }
+        //}
         return optExpression;
     }
 
