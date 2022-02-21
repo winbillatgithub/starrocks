@@ -513,7 +513,13 @@ public class CreateMaterializedViewStmtTest {
     public void testDuplicateColumn(@Injectable SelectStmt selectStmt) throws UserException {
         SelectList selectList = new SelectList();
         TableName tableName = new TableName("db", "table");
-        SlotRef slotRef1 = new SlotRef(tableName, "k1");
+        SlotDescriptor slotDescriptor = new SlotDescriptor(new SlotId(1), null);
+        slotDescriptor.setByteOffset(16);
+        slotDescriptor.setIsAgg(true);
+        slotDescriptor.setColumn(new Column("k1", ScalarType.createType(PrimitiveType.BIGINT)));
+        SlotRef slotRef1 = new SlotRef(slotDescriptor);
+        slotRef1.setTblName(tableName);
+        slotRef1.setCol("k1");
         SelectListItem selectListItem1 = new SelectListItem(slotRef1, null);
         selectList.addItem(selectListItem1);
         List<Expr> fnChildren = Lists.newArrayList(slotRef1);
@@ -522,6 +528,8 @@ public class CreateMaterializedViewStmtTest {
                 "sum", new Type[] {Type.BIGINT}, Function.CompareMode.IS_SUPERTYPE_OF));
         SelectListItem selectListItem2 = new SelectListItem(functionCallExpr, null);
         selectList.addItem(selectListItem2);
+        SelectListItem selectListItem3 = new SelectListItem(functionCallExpr, null);
+        selectList.addItem(selectListItem3);
 
         new Expectations() {
             {
