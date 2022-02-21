@@ -44,57 +44,55 @@ public class AggColumnsRewriter extends OptExpressionVisitor<OptExpression, Mate
     public OptExpression visitLogicalTableScan(OptExpression optExpression, MaterializedViewRule context) {
         LogicalOlapScanOperator olapScanOperator = (LogicalOlapScanOperator) optExpression.getOp();
 
-        // if (olapScanOperator.equals(scanOperator)) {
-            // Output columns need to be rewrite
-            Map<ColumnRefOperator, Column> columnRefOperatorColumnMap =
-                    new HashMap<>(olapScanOperator.getColRefToColumnMetaMap());
-            // Columns need to be removed from columnRefOperatorColumnMap after rewriting
-            Set<ColumnRefOperator> removeSetForRefOperator = new HashSet<>();
-            // <ColumnRefOperator, Column>
-            for (Map.Entry<Integer, Set<CallOperator>> entry : context.getAggFunctions().entrySet()) {
-                // Set<CallOperator>
-                for (CallOperator callOperator : entry.getValue()) {
-                    List<ScalarOperator> arguments = callOperator.getChildren();
-                    if (arguments.isEmpty() || !(arguments.get(0) instanceof ColumnRefOperator)) {
-                        continue;
-                    }
-                    ColumnRefOperator operator = (ColumnRefOperator) arguments.get(0);
-                    for (ColumnRefOperator column : columnRefOperatorColumnMap.keySet()) {
-                        if (column.getId() == operator.getId()) {
-                            // rewrite the column object with aggFnName
-                            ColumnRefOperator newColumnRefOperator = context.getFactory().create(
-                                    column.getName(), column.getType(), column.isNullable()
-                            );
-                            newColumnRefOperator.setAggFnName(callOperator.getFnName());
-                            columnRefOperatorColumnMap.put(newColumnRefOperator, columnRefOperatorColumnMap.get(column));
-                            removeSetForRefOperator.add(column);
-                            // Set rewrite columns mapping
-                            context.addColumnRewriteItem(column, newColumnRefOperator);
-                            break;
-                        }
+        // Output columns need to be rewrite
+        Map<ColumnRefOperator, Column> columnRefOperatorColumnMap =
+                new HashMap<>(olapScanOperator.getColRefToColumnMetaMap());
+        // Columns need to be removed from columnRefOperatorColumnMap after rewriting
+        Set<ColumnRefOperator> removeSetForRefOperator = new HashSet<>();
+        // <ColumnRefOperator, Column>
+        for (Map.Entry<Integer, Set<CallOperator>> entry : context.getAggFunctions().entrySet()) {
+            // Set<CallOperator>
+            for (CallOperator callOperator : entry.getValue()) {
+                List<ScalarOperator> arguments = callOperator.getChildren();
+                if (arguments.isEmpty() || !(arguments.get(0) instanceof ColumnRefOperator)) {
+                    continue;
+                }
+                ColumnRefOperator operator = (ColumnRefOperator) arguments.get(0);
+                for (ColumnRefOperator column : columnRefOperatorColumnMap.keySet()) {
+                    if (column.getId() == operator.getId()) {
+                        // rewrite the column object with aggFnName
+                        ColumnRefOperator newColumnRefOperator = context.getFactory().create(
+                                column.getName(), column.getType(), column.isNullable()
+                        );
+                        newColumnRefOperator.setAggFnName(callOperator.getFnName());
+                        columnRefOperatorColumnMap.put(newColumnRefOperator, columnRefOperatorColumnMap.get(column));
+                        removeSetForRefOperator.add(column);
+                        // Set rewrite columns mapping
+                        context.addColumnRewriteItem(column, newColumnRefOperator);
+                        break;
                     }
                 }
             }
+        }
 
-            for (ColumnRefOperator refOperator : removeSetForRefOperator) {
-                columnRefOperatorColumnMap.remove(refOperator);
-            }
+        for (ColumnRefOperator refOperator : removeSetForRefOperator) {
+            columnRefOperatorColumnMap.remove(refOperator);
+        }
 
-            LogicalOlapScanOperator newScanOperator = new LogicalOlapScanOperator(
-                    olapScanOperator.getTable(),
-                    columnRefOperatorColumnMap,
-                    olapScanOperator.getColumnMetaToColRefMap(),
-                    olapScanOperator.getDistributionSpec(),
-                    olapScanOperator.getLimit(),
-                    olapScanOperator.getPredicate(),
-                    olapScanOperator.getSelectedIndexId(),
-                    olapScanOperator.getSelectedPartitionId(),
-                    olapScanOperator.getPartitionNames(),
-                    olapScanOperator.getSelectedTabletId(),
-                    olapScanOperator.getHintsTabletIds());
+        LogicalOlapScanOperator newScanOperator = new LogicalOlapScanOperator(
+                olapScanOperator.getTable(),
+                columnRefOperatorColumnMap,
+                olapScanOperator.getColumnMetaToColRefMap(),
+                olapScanOperator.getDistributionSpec(),
+                olapScanOperator.getLimit(),
+                olapScanOperator.getPredicate(),
+                olapScanOperator.getSelectedIndexId(),
+                olapScanOperator.getSelectedPartitionId(),
+                olapScanOperator.getPartitionNames(),
+                olapScanOperator.getSelectedTabletId(),
+                olapScanOperator.getHintsTabletIds());
 
-            optExpression = OptExpression.create(newScanOperator);
-        //}
+        optExpression = OptExpression.create(newScanOperator);
         return optExpression;
     }
 
