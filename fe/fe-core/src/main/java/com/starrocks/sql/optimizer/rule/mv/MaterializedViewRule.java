@@ -124,8 +124,8 @@ public class MaterializedViewRule extends Rule {
                 continue;
             }
 
-            BestIndexRewriter bestIndexRewriter = new BestIndexRewriter(scan, bestIndex);
-            optExpression = bestIndexRewriter.rewrite(optExpression, this);
+            BestIndexRewriter bestIndexRewriter = new BestIndexRewriter(scan);
+            optExpression = bestIndexRewriter.rewrite(optExpression, bestIndex);
             if (rewriteContexts.containsKey(bestIndex)) {
                 List<RewriteContext> rewriteContext = rewriteContexts.get(bestIndex);
                 List<RewriteContext> percentileContexts = rewriteContext.stream().
@@ -141,6 +141,10 @@ public class MaterializedViewRule extends Rule {
                 for (MaterializedViewRule.RewriteContext rc : rewriteContext) {
                     optExpression = rewriter.rewrite(optExpression, rc);
                 }
+            } else {
+                // Only handle sum, min, max etc.
+                AggColumnsRewriter aggColumnsRewriter = new AggColumnsRewriter(scan);
+                optExpression = aggColumnsRewriter.rewrite(optExpression, this);
             }
         }
         return Lists.newArrayList(optExpression);
